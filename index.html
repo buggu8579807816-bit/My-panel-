@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Authorized SMS messaging panel">
+<title>PRASHANT SMS PANEL</title>
+<style>
+:root{--orange:#ff6500;--orange2:#ff9a00}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#070707;color:#fff;font-family:Arial,Helvetica,sans-serif;padding:20px}
+.wrap{max-width:760px;margin:35px auto}
+.panel{background:#0d0d0d;border:1px solid var(--orange);border-radius:28px;padding:28px;box-shadow:0 0 40px rgba(255,101,0,.14)}
+h1{text-align:center;margin:0;color:var(--orange);font-size:30px}
+.sub{text-align:center;color:#999;margin:10px 0 28px}
+label{display:block;color:#ffb07e;font-weight:700;margin:18px 0 8px}
+input,textarea{width:100%;border:1px solid #303030;border-radius:15px;background:#070707;color:#fff;padding:16px;font-size:16px;outline:none}
+input:focus,textarea:focus{border-color:var(--orange)}
+textarea{min-height:160px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{width:100%;border:0;border-radius:15px;padding:17px;margin-top:22px;background:linear-gradient(90deg,#ff3d00,var(--orange2));color:#fff;font-weight:800;font-size:17px;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.status{display:none;margin-top:18px;padding:15px;border-radius:13px;background:#171717;line-height:1.5;word-break:break-word}
+.small{font-size:12px;color:#777;margin-top:12px}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#181818;color:#aaa;font-size:12px}
+@media(max-width:600px){.row{grid-template-columns:1fr}.panel{padding:20px}h1{font-size:25px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>🔥 PRASHANT SMS PANEL</h1>
+    <div class="sub"><span class="badge">LIVE SMS GATEWAY</span></div>
+
+    <div class="row">
+      <div>
+        <label for="key">Panel Key</label>
+        <input id="key" type="password" placeholder="Your panel key" autocomplete="off">
+      </div>
+      <div>
+        <label for="to">Receiver Number</label>
+        <input id="to" type="tel" placeholder="+919876543210" autocomplete="tel">
+      </div>
+    </div>
+
+    <label for="message">Message</label>
+    <textarea id="message" maxlength="1600" placeholder="Type your message..."></textarea>
+    <div class="small"><span id="count">0</span>/1600 characters</div>
+
+    <button id="send" type="button" onclick="sendSMS()">📨 SEND MESSAGE</button>
+    <div id="status" class="status"></div>
+
+    <div class="small">
+      Use only for legitimate messages to recipients you are authorized to contact.
+    </div>
+  </div>
+</div>
+
+<script>
+const message = document.getElementById("message");
+const count = document.getElementById("count");
+const statusBox = document.getElementById("status");
+const button = document.getElementById("send");
+
+message.addEventListener("input", () => {
+  count.textContent = message.value.length;
+});
+
+function showStatus(text) {
+  statusBox.style.display = "block";
+  statusBox.textContent = text;
+}
+
+async function sendSMS() {
+  const key = document.getElementById("key").value.trim();
+  const to = document.getElementById("to").value.trim();
+  const body = message.value.trim();
+
+  if (!key || !to || !body) {
+    showStatus("❌ Panel key, receiver number and message are required.");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "⏳ SENDING...";
+  showStatus("Connecting to SMS provider...");
+
+  try {
+    const response = await fetch("/api/send-sms", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Panel-Key": key
+      },
+      body: JSON.stringify({ to, message: body })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      showStatus("❌ " + (data.error || "SMS could not be sent."));
+      return;
+    }
+
+    showStatus("✅ SMS request accepted. Provider status: " + data.status + "\\nMessage ID: " + data.sid);
+  } catch (error) {
+    showStatus("❌ Server connection failed.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "📨 SEND MESSAGE";
+  }
+}
+</script>
+</body>
+</html>
